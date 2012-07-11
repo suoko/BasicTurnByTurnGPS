@@ -1,0 +1,279 @@
+<!--
+
+This file is part of PoorMansGPS
+
+Copyright (c) 2012, Bobbie Smulders
+
+Contact:  mail@bsmulders.com
+
+GNU General Public License Usage
+This file may be used under the terms of the GNU General Public License version 3.0 as published by the Free Software Foundation and appearing in the file LICENSE included in the packaging of this file.  Please review the following information to ensure the GNU General Public License version 3.0 requirements will be met: http://www.gnu.org/copyleft/gpl.html.
+
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+		
+		<title>Poor Mans GPS</title>
+		
+		<link href="resources/default.css" rel="stylesheet" type="text/css" />
+		
+		<link rel="resources/apple-touch-icon" href="touch-icon.png"/>
+		<link rel="resources/apple-touch-startup-image" href="startup.png">
+		
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+		<script type="text/javascript">
+			// This script is based on the following example by Google:
+			// "Google Maps JavaScript API v3 Example: Directions Complex"
+
+			// Google Maps core objects
+			var map;
+			var directionsService;
+			var directionsRenderer;
+
+			// Marker objects
+			var markerArray = [];
+			var userMarker;
+
+			// Icon image locations
+			var inactiveIcon;
+			var activeIcon;
+			var userIcon;
+
+			// Route objects
+			var destination;
+			var directions;
+			var activeStep;
+			
+			// Direction objects
+			var directionDistance
+			var directionText
+
+			function initialize() {
+				// Set icon locations
+				inactiveIcon = 'http://maps.google.com/mapfiles/marker_grey.png';
+				activeIcon = 'http://maps.google.com/mapfiles/marker.png';
+				userIcon = 'http://maps.google.com/mapfiles/arrow.png';
+
+				// Instantiate a directions service
+				directionsService = new google.maps.DirectionsService();
+
+				// Instantiate a map
+				var mapOptions = {
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				}
+				map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+
+				// Instantiate a renderer for directions and bind it to the map
+				var rendererOptions = {
+					map: map,
+					preserveViewport: true
+				}
+				directionsRenderer = new google.maps.DirectionsRenderer(rendererOptions);
+
+				// Instantiate the user marker
+				var userMarkerOptions = {
+					icon: userIcon,
+					map: map
+				}
+				userMarker = new google.maps.Marker(userMarkerOptions);
+
+				// Set geolocation listener
+				if (navigator.geolocation) {
+					navigator.geolocation.watchPosition(updateGeolocation);
+				} else {
+					alert('Geolocation is not supported');
+				}
+			}
+
+			function clearRoute() {
+				// Disable the DirectionsRenderer
+				directionsRenderer.setMap(null);
+				
+				// Remove any existing markers from the map
+				for (i = 0; i < markerArray.length; i++) {
+					markerArray[i].setMap(null);
+				}
+
+				// Clear the marker array and the active step
+				markerArray = [];
+				activeStep = 0;		
+				
+				// Clear the directions panel
+				updateDirectionPanel(0, null);		
+			}
+
+			function calcRoute(destination) {
+				// Clear the current route
+				clearRoute();
+								
+				if (destination != null) {
+					// Create a DirectionsRequest
+					var request = {
+						origin: userMarker.getPosition(),
+						destination: destination,
+						travelMode: google.maps.DirectionsTravelMode.DRIVING
+					};
+
+					// Request route directions
+					directionsService.route(request, function (response, status) {
+						if (status == google.maps.DirectionsStatus.OK) {
+
+							if (response.routes[0].warnings.length > 0) {
+								alert(response.routes[0].warnings);
+							}
+
+							// Store directions for later use
+							directions = response;
+
+							// Render directions on map
+							directionsRenderer.setMap(map);
+							directionsRenderer.setDirections(directions);
+
+							// Place the direction markers on the map
+							createDirectionMarkers();
+						}
+					});
+				}
+			}
+
+			function createDirectionMarkers() {
+				var route = directions.routes[0].legs[0]
+
+				for (var i = 0; i < route.steps.length; i++) {
+					// Add marker for each step on the route
+					var marker = new google.maps.Marker({
+						position: route.steps[i].start_point,
+						icon: inactiveIcon,
+						map: map
+					});
+					markerArray[i] = marker;
+				}
+			}
+
+			function updateUserMarker(lat, lng) {
+				userMarker.setPosition(new google.maps.LatLng(lat, lng));
+				map.setCenter(userMarker.getPosition());
+				map.setZoom(19);
+				updateActiveStep();
+			}
+
+			function updateActiveStep() {
+				if (markerArray.length > 0) {
+					// Look for a nearby marker
+					var found = false;
+					
+					for (var i = 0; i < markerArray.length; i++) {
+						var distance = google.maps.geometry.spherical.computeDistanceBetween(markerArray[i].getPosition(), userMarker.getPosition());
+
+						if (distance < 20) {
+							found = true;
+							activeStep = i;
+							markerArray[i].setIcon(activeIcon);
+						} else {
+							markerArray[i].setIcon(inactiveIcon);
+						}
+					}
+
+					// Get the active direction marker
+					var directionMarker = (found) ? activeStep : (activeStep + 1);
+					
+					if (directionMarker >= markerArray.length) {
+						// Reached the end of the route
+						clearRoute();
+					}
+					else {
+						// Update the directions
+						var distance = google.maps.geometry.spherical.computeDistanceBetween(markerArray[directionMarker].getPosition(), userMarker.getPosition());
+						var text = directions.routes[0].legs[0].steps[directionMarker].instructions;
+						updateDirectionPanel(distance, text);
+					}
+				}
+			}
+			
+			function updateDirectionPanel (distance, text) {
+				var changed = false;
+				
+				if (directionDistance != distance || directionText != text) {
+					// Update panel when a changed is detected
+					directionDistance = distance;
+					directionText = text;
+					
+					updatePanel('directions', '<span class="distance">' + (directionDistance > 20 ? Math.round(directionDistance) + 'meter' : '&nbsp;') + ' </span> ' + (directionText != null ? directionText : '&nbsp;'));
+				}			
+			}
+
+			function updateGeolocation(position) {
+				var lat = position.coords.latitude;
+				var lng = position.coords.longitude;
+				var speed = position.coords.speed;
+				var heading = position.coords.heading;
+				var description = (heading != null) ? ((speed * 3.6) + ' km/h, heading ' + heading) : ((speed * 3.6) + ' km/h');
+
+				updatePanel('geolocation', description);
+				updateUserMarker(lat, lng);
+			}
+
+			function manipulateGeolocation(direction) {
+				var lat = userMarker.getPosition().lat();
+				var lng = userMarker.getPosition().lng();
+
+				switch (direction) {
+				case 'up':
+					lat += 0.0001;
+					break;
+				case 'down':
+					lat -= 0.0001;
+					break;
+				case 'right':
+					lng += 0.0005;
+					break;
+				case 'left':
+					lng -= 0.0005;
+					break;
+				}
+
+				updateUserMarker(lat, lng);
+			}
+
+			function updatePanel(id, text) {
+				var panel = document.getElementById(id);
+
+				if (panel && panel.innerHTML) {
+					panel.innerHTML = text;
+				}
+			}
+			
+		</script>
+	</head>
+	<body onload="initialize()">
+		<div id="controls">
+			<a href="#" onclick="calcRoute(prompt('Destination', destination))">Calculate route</a>
+			&middot;
+			<a href="#" onclick="calcRoute(destination)">Recalculate</a>
+		</div>	
+		<div id="map_canvas"></div>
+		<div id="directions">&nbsp;</div>
+		
+		<!--
+		
+		For debugging purposes
+		
+		<div id="geolocation">&nbsp;</div>
+		
+		<div id="injection">
+			<a href="#" onclick="manipulateGeolocation('up')">Up</a>&middot;
+			<a href="#" onclick="manipulateGeolocation('down')">Down</a>&middot;
+			<a href="#" onclick="manipulateGeolocation('left')">Left</a>&middot;
+			<a href="#" onclick="manipulateGeolocation('right')">Right</a>
+		</div>
+		
+		-->
+		
+	</body>
+
+</html>
