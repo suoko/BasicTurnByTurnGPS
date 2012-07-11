@@ -8,7 +8,9 @@ Contact: <mail@bsmulders.com>
 License: GPLv3
 
 ## Project goal
-The goal of this project is to create a cheap cross-platform web-based turn-by-turn navigation application as an alternative to expensive single platform applications
+The goal of this project is to create a free cross-platform web-based turn-by-turn navigation application as an alternative to expensive single platform applications
+
+The application uses Google Maps JavaScript API v3 for the maps and directions. The HTML5 Geolocation API is used to pinpoint the user's current location.
 
 This is not an alternative to Scout for Apps by Telenav. Scout is meant to be integrated a business website in order to facilitate customers with an easy way to visit the stores. The goal of Poor Man's GPS is to facilitate navigation from anywhere to anywhere.
 
