@@ -14,6 +14,13 @@ The application uses Google Maps JavaScript API v3 for the maps and directions. 
 
 This is not an alternative to Scout for Apps by Telenav. Scout is meant to be integrated a business website in order to facilitate customers with an easy way to visit the stores. The goal of Poor Man's GPS is to facilitate navigation from anywhere to anywhere.
 
+Screenshot:
+![Screenshot](PoorMansGPS/raw/master/screenshot.png)
+
+Demonstration video:
+http://www.youtube.com/watch?v=IZ9vX49Is1I
+
+
 ## Project components
 ### index.html
 Contains the entire application
