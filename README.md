@@ -16,7 +16,7 @@ This is not an alternative to Scout for Apps by Telenav. Scout is meant to be in
 
 Screenshot:
 
-&nbsp;![Screenshot](PoorMansGPS/raw/master/screenshots/IMG_0710 small.png)
+![Screenshot](PoorMansGPS/raw/master/screenshots/IMG_0710 small.png)
 &nbsp;![Screenshot](PoorMansGPS/raw/master/screenshots/IMG_0712 small.png)
 &nbsp;![Screenshot](PoorMansGPS/raw/master/screenshots/IMG_0713 small.png)
 
