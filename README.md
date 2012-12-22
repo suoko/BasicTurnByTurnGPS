@@ -29,8 +29,7 @@ http://www.youtube.com/watch?v=IZ9vX49Is1I
 Contains the entire application
 
 ### resources
-Containts the stylesheet, the iOS icon and iOS startup screen
+Contains the stylesheet, the iOS icon and iOS startup screen
 
 ## Usage
-### ctdstorage
 Copy both index.html and the resources directory to the same directory. Run index.html in a browser that supports Geolocation (IE 9, Firefox 3.5, Chrome 5, Safari 5, Opera 10.60).
