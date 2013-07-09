@@ -108,9 +108,6 @@ This file may be used under the terms of the GNU General Public License version 
 			}
 
 			function calcRoute(destination) {
-				// Clear the current route
-				clearRoute();
-								
 				if (destination != null) {
 					// Create a DirectionsRequest
 					var request = {
@@ -121,21 +118,41 @@ This file may be used under the terms of the GNU General Public License version 
 
 					// Request route directions
 					directionsService.route(request, function (response, status) {
-						if (status == google.maps.DirectionsStatus.OK) {
+						switch(status) {
+							case google.maps.DirectionsStatus.OK:
 
-							if (response.routes[0].warnings.length > 0) {
-								alert(response.routes[0].warnings);
-							}
-
-							// Store directions for later use
-							directions = response;
-
-							// Render directions on map
-							directionsRenderer.setMap(map);
-							directionsRenderer.setDirections(directions);
-
-							// Place the direction markers on the map
-							createDirectionMarkers();
+								// Save destination for future purposes
+								this.destination = destination;
+	
+								// Clear the current route
+								clearRoute();
+		
+								if (response.routes[0].warnings.length > 0) {
+									alert(response.routes[0].warnings);
+								}
+	
+								// Store directions for later use
+								directions = response;
+	
+								// Render directions on map
+								directionsRenderer.setMap(map);
+								directionsRenderer.setDirections(directions);
+	
+								// Place the direction markers on the map
+								createDirectionMarkers();
+	
+								// Start the navigation by displaying the first step
+								updateActiveStep();
+								break;
+							case google.maps.DirectionsStatus.NOT_FOUND:
+								alert('The destination could not be found');
+								break;
+							case google.maps.DirectionsStatus.ZERO_RESULTS:
+								alert('No route could be found');
+								break;
+							default:
+								alert('Undefined error');
+								break;
 						}
 					});
 				}
@@ -272,7 +289,7 @@ This file may be used under the terms of the GNU General Public License version 
 			<a href="#" onclick="manipulateGeolocation('right')">Right</a>
 		</div>
 		
-		-->
+		__>
 		
 	</body>
 
